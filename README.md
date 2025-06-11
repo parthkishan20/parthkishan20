@@ -1,5 +1,5 @@
 <h1 align="center">Hi 👋, I'm PARTH PATEL</h1>
-<h3 align="center">An AI augmented passionate Full Stack developer.</h3>
+<h3 align="center">An AI augmented Full Stack developer.</h3>
 
 <p align="left"> <img src="https://komarev.com/ghpvc/?username=parthkishan20&label=Profile%20views&color=0e75b6&style=flat" alt="parthkishan20" /> </p>
 
