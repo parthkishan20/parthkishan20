@@ -1,4 +1,4 @@
-<h1 align="center">Parthkumar (Parth) Patel</h1>
+<h1 align="center">Parthkumar Patel</h1>
 <h3 align="center">Full-Stack Engineer | AI-Augmented Developer | MS Computer Science, Stevens Institute of Technology</h3>
 
 <p align="center">
