@@ -67,7 +67,11 @@ I also build ML pipelines end-to-end — credit score classification on 100K cus
 
 **Commit history, but make it a game.**
 
-![pacman contribution graph](https://raw.githubusercontent.com/parthkishan20/parthkishan20/output/pacman-contribution-graph.svg)
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/parthkishan20/parthkishan20/output/bomberman-contribution-graph-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/parthkishan20/parthkishan20/output/bomberman-contribution-graph.svg">
+    <img alt="bomberman contribution graph" src="https://raw.githubusercontent.com/parthkishan20/parthkishan20/output/bomberman-contribution-graph.svg">
+</picture>
 
 ---
 
