@@ -62,8 +62,8 @@ I also build ML pipelines end-to-end — credit score classification on 100K cus
 
 ## 📊 GitHub at a glance
 
-![GitHub stats](https://github-readme-stats.vercel.app/api?username=parthkishan20&show_icons=true&include_all_commits=true)
-![Top languages](https://github-readme-stats.vercel.app/api/top-langs?username=parthkishan20&layout=compact)
+![GitHub stats](https://readme-stats-github.pages.dev/api?username=parthkishan20&theme=dark)
+![Top languages](https://readme-stats-github.pages.dev/api/top-langs?username=parthkishan20&theme=dark)
 
 **Commit history, but make it a game.**
 
