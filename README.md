@@ -77,6 +77,6 @@ I also build ML pipelines end-to-end — credit score classification on 100K cus
 
 ## 📬 Let's talk
 
-I'm actively interviewing for Software Engineer, Full Stack, Frontend, and AI/GenAI roles in the NJ/NYC area (open to remote). If you're hiring — or just want to talk shop about React, FastAPI, or agentic LLM workflows — reach out:
+I'm actively interviewing for Software Engineer, Full Stack, Frontend, and AI/GenAI roles in the NJ/NYC area (open to remote). If you're hiring — or just want to talk shop about React, FastAPI, or agentic LLM workflow — reach out:
 
 **✉️ [parthkishan20@gmail.com](mailto:parthkishan20@gmail.com)** · **🔗 [linkedin.com/in/parthkishan20](https://linkedin.com/in/parthkishan20)** · **🌐 [parthkumar.me](https://parthkumar.me)**
