@@ -19,7 +19,7 @@ $ open --project
 
 <img src="./assets/terminal/05-git-log.svg" width="100%" alt="Career as a git log. 2019 to 2023: BE Computer Engineering, GEC Gandhinagar, CGPA 8.33. 2023 to 2024: Software Developer at TechBilv Solutions, India; client-facing React apps, AWS IIS and S3 deploys, embedded a third-party AI chatbot. September 2024: MS Computer Science at Stevens Institute of Technology, Hoboken NJ. September 2025: Software Development Intern at EventEase, September to December 2025; two greenfield React 19 and TypeScript SPAs for live tournament scoring from phone to 4K TV, Redux Toolkit, shadcn/ui. May 2026: MS Computer Science complete, GPA 3.9. HEAD: your team? Software Engineer, Full Stack, Frontend, AI/GenAI, NJ/NYC metro or remote.">
 
-<img src="./assets/terminal/06-contributions.svg" width="100%" alt="GitHub contributions as of October 9, 2026: 1,494 in the last year, shown as a weekly bar chart from October 2025 to October 2026 with a peak in mid-September. Longest streak 239 days, October 5, 2025 to May 31, 2026. Active days 263 of 370. Peak day 91 on September 13, 2026. 2,783 contributions all-time since 2021.">
+<img src="./assets/terminal/06-contributions.svg" width="100%" alt="GitHub contributions as of October 9, 2026: 3,154 in the last year, shown as a weekly bar chart from October 2025 to October 2026; the busiest week, starting September 13, 2026, had 233. Longest streak 370 days, October 5, 2025 to October 9, 2026. Active days 370 of 370. Peak day 96 on September 13, 2026. 8,657 contributions all-time since 2021.">
 
 <details>
 <summary><code>$ ls ~/projects/more</code></summary>
