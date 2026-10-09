@@ -3,13 +3,14 @@
 Setup (once):
     npm i jetbrains-mono
     pip install fonttools brotli
-Run from the repo root:
-    python3 scripts/terminal/gen_term.py node_modules/jetbrains-mono/fonts/webfonts assets/terminal
-Edit the content in each win_* function (and WEEKS for the contribution window),
-then re-run to redraw the SVGs. The font is subset and embedded, because SVG
-images on GitHub cannot load web fonts.
+Run from the repo root (a GitHub token is needed for the contribution data):
+    GITHUB_TOKEN=... python3 scripts/terminal/gen_term.py node_modules/jetbrains-mono/fonts/webfonts assets/terminal
+Edit the content in each win_* function, then re-run to redraw the SVGs. The
+contribution window is fetched live from the GitHub GraphQL API, and its alt
+text in README.md is rewritten to match. The font is subset and embedded,
+because SVG images on GitHub cannot load web fonts.
 """
-import base64, io, math, os, sys
+import base64, datetime as dt, io, json, math, os, re, sys, urllib.request
 from html import escape
 from fontTools.ttLib import TTFont
 from fontTools import subset
@@ -330,21 +331,72 @@ def win_log():
 # ======================================================================
 # 06 · contribution sparkline (static, dated)
 # ======================================================================
-# 52 full weeks from 2025-10-05, then the partial week Oct 4–9, 2026
-WEEKS = [65,17,37,35,21,50,70,34,24,45,67,12,13,13,10,18,29,24,48,15,50,32,32,14,17,42,34,40,20,39,38,55,23,32,1,8,0,5,0,53,1,0,0,0,4,0,0,0,11,186,90,15,5]
-MONTHS = [("Oct", 0), ("Nov", 4), ("Dec", 8), ("Jan", 12), ("Feb", 17), ("Mar", 21), ("Apr", 25),
-          ("May", 29), ("Jun", 34), ("Jul", 38), ("Aug", 42), ("Sep", 47), ("Oct", 51)]
+LOGIN = "parthkishan20"
+
+def graphql(query):
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    if not token: sys.exit("set GITHUB_TOKEN (or GH_TOKEN) to fetch contribution data")
+    req = urllib.request.Request("https://api.github.com/graphql", json.dumps({"query": query}).encode(),
+                                 {"Authorization": f"bearer {token}", "Content-Type": "application/json"})
+    with urllib.request.urlopen(req) as resp: body = json.load(resp)
+    if body.get("errors"): sys.exit(f"GraphQL error: {body['errors']}")
+    return body["data"]["user"]
+
+def fetch_contrib():
+    """Last-year calendar (same window as the profile page) plus all-time totals."""
+    cc = graphql(f'{{ user(login: "{LOGIN}") {{ contributionsCollection {{ contributionYears '
+                 'contributionCalendar { totalContributions weeks { contributionDays { date contributionCount } } } } } }'
+                 )["contributionsCollection"]
+    years = sorted(cc["contributionYears"])
+    per_year = graphql(f'{{ user(login: "{LOGIN}") {{ ' + " ".join(
+        f'y{y}: contributionsCollection(from: "{y}-01-01T00:00:00Z", to: "{y}-12-31T23:59:59Z") '
+        '{ contributionCalendar { totalContributions } }' for y in years) + " } }")
+    cal = cc["contributionCalendar"]
+    weeks = [[(dt.date.fromisoformat(d["date"]), d["contributionCount"]) for d in wk["contributionDays"]]
+             for wk in cal["weeks"]]
+    return {"total": cal["totalContributions"], "weeks": weeks, "first_year": years[0],
+            "all_time": sum(v["contributionCalendar"]["totalContributions"] for v in per_year.values())}
+
+def contrib_stats(data):
+    days = [d for wk in data["weeks"] for d in wk]
+    best, run = (0, None, None), 0
+    for i, (date, n) in enumerate(days):
+        run = run + 1 if n else 0
+        if run > best[0]: best = (run, days[i - run + 1][0], date)
+    peak = max(days, key=lambda d: d[1])
+    sums = [sum(n for _, n in wk) for wk in data["weeks"]]
+    busiest = max(range(len(sums)), key=sums.__getitem__)
+    return {**data, "days": days, "streak": best, "peak": peak, "sums": sums, "busiest": busiest,
+            "active": sum(1 for _, n in days if n)}
+
+def fmt(d, long=False):
+    return f"{d:%B} {d.day}, {d.year}" if long else f"{d:%b} {d.day}, {d.year}"
+
+def month_labels(weeks):
+    """(name, week index) at the week holding each month's 1st, dropping labels that would overlap."""
+    labels = [(f"{weeks[0][0][0]:%b}", 0)]
+    for i, wk in enumerate(weeks[1:], 1):
+        first = next((d for d, _ in wk if d.day == 1), None)
+        if first is None: continue
+        if i * 2 < labels[-1][1] * 2 + 4: labels.pop()
+        labels.append((f"{first:%b}", i))
+    return labels
+
+STATS = contrib_stats(fetch_contrib())
+
 def win_contrib():
     w = Win("parth@github: ~")
     w.prompt("gh contrib parthkishan20 --year")
-    w.add(S("1,494", GREEN, True), S(" contributions in the last year", FG), S("  ·  as of 2026-10-09", DIM))
+    st = STATS
+    w.add(S(f"{st['total']:,}", GREEN, True), S(" contributions in the last year", FG),
+          S(f"  ·  as of {st['days'][-1][0].isoformat()}", DIM))
     w.blank()
     blocks = " ▁▂▃▄▅▆▇█"
-    mx = max(WEEKS)
+    mx = max(max(st["sums"]), 1)
     ROWS = 4                                   # chart height in text rows, linear scale
     top = len(w.rows)
     for _ in range(ROWS): w._row(len(w.rows))
-    for i, v in enumerate(WEEKS):
+    for i, v in enumerate(st["sums"]):
         eighths = 0 if v == 0 else max(1, round(v / mx * ROWS * 8))
         col = YEL if v == mx else (G3 if v >= 40 else G2 if v >= 15 else G1)
         if v == 0:
@@ -353,11 +405,14 @@ def win_contrib():
             fill = min(8, max(0, eighths - k * 8))
             if fill: w.put(top + ROWS - 1 - k, i * 2, blocks[fill] * 2, col)
     r = w.add(S(""))
-    for m, wk in MONTHS:
+    for m, wk in month_labels(st["weeks"]):
         w.put(r, wk * 2, m, DIM)
     w.blank()
-    for k, v in [("longest streak", "239 days  (Oct 5, 2025 → May 31, 2026)"), ("active days", "263 of 370"),
-                 ("peak day", "91 on Sep 13, 2026"), ("all-time", "2,783 since 2021")]:
+    n, a, b = st["streak"]
+    streak = f"{n} day{'s' * (n != 1)}" + (f"  ({fmt(a)} → {fmt(b)})" if n else "")
+    for k, v in [("longest streak", streak), ("active days", f"{st['active']} of {len(st['days'])}"),
+                 ("peak day", f"{st['peak'][1]} on {fmt(st['peak'][0])}"),
+                 ("all-time", f"{st['all_time']:,} since {st['first_year']}")]:
         w.add(S(f"{k} ".ljust(17, "."), DIM), S(" " + v, WHITE))
     w.blank()
     w.prompt(caret=True)
@@ -368,7 +423,7 @@ WINDOWS = [("01-gh-fetch", win_fetch), ("02-proof", win_proof), ("03-rule-gate",
 rendered = [(name, render(fn())) for name, fn in WINDOWS]
 
 def face(weight):
-    f = TTFont(FONT_FILES[weight])
+    f = TTFont(FONT_FILES[weight], recalcTimestamp=False)   # keep output byte-identical between runs
     opts = subset.Options(); opts.flavor = "woff"; opts.layout_features = []
     s = subset.Subsetter(opts); s.populate(text="".join(sorted(USED[weight])) + " ▶"); s.subset(f)
     buf = io.BytesIO(); f.flavor = "woff"; f.save(buf)
@@ -385,3 +440,22 @@ for name, (H, body) in rendered:
            f'<style>{CSS}</style>{body}</svg>')
     with open(f"{OUT}/{name}.svg", "w") as fh: fh.write(svg)
     print(name, H, round(len(svg) / 1024, 1), "KB")
+
+# keep the contribution window's alt text in README.md in step with the SVG
+def contrib_alt(st):
+    n, a, b = st["streak"]
+    first, last = st["days"][0][0], st["days"][-1][0]
+    week = st["weeks"][st["busiest"]][0][0]
+    return (f"GitHub contributions as of {fmt(last, True)}: {st['total']:,} in the last year, shown as a weekly bar "
+            f"chart from {first:%B %Y} to {last:%B %Y}; the busiest week, starting {fmt(week, True)}, had "
+            f"{st['sums'][st['busiest']]:,}. Longest streak {n} day{'s' * (n != 1)}"
+            + (f", {fmt(a, True)} to {fmt(b, True)}" if n else "") +
+            f". Active days {st['active']} of {len(st['days'])}. Peak day {st['peak'][1]} on {fmt(st['peak'][0], True)}. "
+            f"{st['all_time']:,} contributions all-time since {st['first_year']}.")
+
+README = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "README.md")
+with open(README) as fh: readme = fh.read()
+readme, hits = re.subn(r'(<img src="\./assets/terminal/06-contributions\.svg"[^>]*? alt=")[^"]*(")',
+                       lambda m: m.group(1) + escape(contrib_alt(STATS)) + m.group(2), readme)
+if hits != 1: sys.exit("could not find the 06-contributions <img> in README.md")
+with open(README, "w") as fh: fh.write(readme)

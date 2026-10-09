@@ -1,0 +1,49 @@
+name: refresh terminal SVGs
+
+on:
+    schedule:
+        - cron: '0 6 * * *'
+    workflow_dispatch:
+    push:
+        branches:
+            - main
+        paths:
+            - 'scripts/terminal/**'
+            - '.github/workflows/terminal-svgs.yml'
+
+concurrency:
+    group: terminal-svgs
+    cancel-in-progress: false
+
+jobs:
+    refresh:
+        permissions:
+            contents: write
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-python@v5
+              with:
+                  python-version: '3.12'
+
+            - name: install font and subsetting tools
+              run: |
+                  pip install fonttools==4.66.1 brotli
+                  npm i --no-save jetbrains-mono@1.0.6
+
+            - name: regenerate SVGs with live contribution data
+              run: python3 scripts/terminal/gen_term.py node_modules/jetbrains-mono/fonts/webfonts assets/terminal
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: commit if anything changed
+              run: |
+                  git add assets/terminal README.md
+                  if git diff --cached --quiet; then echo "no changes"; exit 0; fi
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                  git commit -m "Refresh contribution window"
+                  git push
